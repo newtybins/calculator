@@ -28,6 +28,8 @@
   "type": "module",
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^5.15.4",
+    "immutability-helper": "^3.1.1",
+    "mathjs": "^10.1.0",
     "svelte-fa": "^2.4.0"
   }
 }
