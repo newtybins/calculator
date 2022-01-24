@@ -1,6 +1,7 @@
 lockfileVersion: 5.3
 
 specifiers:
+  '@fortawesome/free-brands-svg-icons': ^5.15.4
   '@sveltejs/adapter-auto': next
   '@sveltejs/kit': next
   autoprefixer: ^10.4.2
@@ -9,10 +10,15 @@ specifiers:
   prettier-plugin-svelte: ^2.4.0
   svelte: ^3.44.0
   svelte-check: ^2.2.6
+  svelte-fa: ^2.4.0
   svelte-preprocess: ^4.9.4
   tailwindcss: ^3.0.16
   tslib: ^2.3.1
   typescript: ^4.4.3
+
+dependencies:
+  '@fortawesome/free-brands-svg-icons': 5.15.4
+  svelte-fa: 2.4.0
 
 devDependencies:
   '@sveltejs/adapter-auto': 1.0.0-next.15
@@ -50,6 +56,20 @@ packages:
       chalk: 2.4.2
       js-tokens: 4.0.0
     dev: true
+
+  /@fortawesome/fontawesome-common-types/0.2.36:
+    resolution: {integrity: sha512-a/7BiSgobHAgBWeN7N0w+lAhInrGxksn13uK7231n2m8EDPE3BMCl9NZLTGrj9ZXfCmC6LM0QLqXidIizVQ6yg==}
+    engines: {node: '>=6'}
+    requiresBuild: true
+    dev: false
+
+  /@fortawesome/free-brands-svg-icons/5.15.4:
+    resolution: {integrity: sha512-f1witbwycL9cTENJegcmcZRYyawAFbm8+c6IirLmwbbpqz46wyjbQYLuxOc7weXFXfB7QR8/Vd2u5R3q6JYD9g==}
+    engines: {node: '>=6'}
+    requiresBuild: true
+    dependencies:
+      '@fortawesome/fontawesome-common-types': 0.2.36
+    dev: false
 
   /@iarna/toml/2.2.5:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
@@ -1100,6 +1120,10 @@ packages:
       - stylus
       - sugarss
     dev: true
+
+  /svelte-fa/2.4.0:
+    resolution: {integrity: sha512-0bnbMGbsE1LUnlioDcf27tl2O8kjuXlTXMXzIxC7LoIOWmqn0D+zd539HfLiQbdLuOHGTaynwN9V+4ehhEu1Jw==}
+    dev: false
 
   /svelte-hmr/0.14.9_svelte@3.46.2:
     resolution: {integrity: sha512-bKE9+4qb4sAnA+TKHiYurUl970rjA0XmlP9TEP7K/ncyWz3m81kA4HOgmlZK/7irGK7gzZlaPDI3cmf8fp/+tg==}
