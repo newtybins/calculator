@@ -5,7 +5,7 @@
 
 	let operations: string[] = [];
 	let displayElement: HTMLElement;
-	let answer: string = null; // save the answer for quick input
+	let answer: string = null;
 	const validOperators: string[] = [];
 
 	onMount(() => {
@@ -23,7 +23,7 @@
 
 		switch (operation) {
 			case 'C':
-				operations = [];
+				clear();
 				break;
 
 			case '=':
@@ -43,15 +43,25 @@
 		}
 	};
 
+	const clear = () => {
+		operations = update(operations, { $splice: [[0, operations.length]] });
+	};
+
 	const shouldPlaceOperator = (operator: string) => {
-		const last = operations?.[operations.length - 1];
+		const last = operations?.[operations.length - 1]?.trim();
+		const beforeLast = operations?.[operations.length - 2]?.trim();
 
 		return !(operator !== '-' // If the operator is not a minus...
 			? isNaN(parseInt(operator)) && isNaN(parseInt(last)) && last !== '!' // ..ensure that operators never touch
-			: last === '-' && operations?.[operations.length - 2] === '-'); // ...otherwise, ensure that only two minuses can touch
+			: operations.length === 1 // If there is only one operator...
+			? last === '-' // ensure only one minus can be there
+			: isNaN(parseInt(beforeLast)) // If the operation before last is an operator...
+			? last === '-' // ensure only one minus can be there, once again
+			: last === '-' && beforeLast === '-'); // ...otherwise, ensure that only two minuses can touch
 	};
 
-	const sanitiseExpression = () => operations.join('').replace(/×/g, '*').replace(/÷/g, '/');
+	const sanitiseExpression = () =>
+		operations.join('').replace(/×/g, '*').replace(/÷/g, '/').replace(/ /g, '');
 
 	const calculate = () => {
 		const expression = sanitiseExpression();
@@ -71,8 +81,23 @@
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		const { code } = e;
+		const last = operations?.[operations.length - 1]?.trim();
 
 		if (e.code.startsWith('Digit') && !e.shiftKey) {
+			// Do not allow digits after the factorial sign
+			if (last === '!') return;
+
+			// Clear the operations if the answer is the last operation
+			if (last === answer) clear();
+
+			// If there is a minus sign before this number and one before that sign, remove the space after the number
+			if (last === '-' && isNaN(parseInt(operations?.[operations.length - 2])))
+				operations = update(operations, {
+					[operations.length - 1]: {
+						$set: ' -'
+					}
+				});
+
 			const digit = code.split('Digit')[1];
 			operations = update(operations, { $push: [digit] });
 		} else {
@@ -102,12 +127,11 @@
 				}
 
 				// Factorial specific rules
-				if (operation === '!') {
-					const last = operations?.[operations.length - 1];
+				if (operation === '!' && isNaN(parseInt(last))) return;
 
-					if (isNaN(parseInt(last))) return;
-				} else {
+				if (operation !== '!') {
 					if (!shouldPlaceOperator(operation) || !keyPressed) return;
+					operation = ` ${operation} `;
 				}
 
 				operations = update(operations, { $push: [operation] });
@@ -131,13 +155,13 @@
 					// -
 					case 'Minus':
 						if (!shouldPlaceOperator('-')) return;
-						operations = update(operations, { $push: ['-'] });
+						operations = update(operations, { $push: [' - '] });
 						break;
 
 					// /
 					case 'Slash':
 						if (!shouldPlaceOperator('÷')) return;
-						operations = update(operations, { $push: ['÷'] });
+						operations = update(operations, { $push: [' ÷ '] });
 						break;
 
 					// BACKSPACE
