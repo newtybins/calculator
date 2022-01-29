@@ -5,7 +5,7 @@
 
 	let operations: string[] = [];
 	let displayElement: HTMLElement;
-	let answer = ''; // save the answer for quick input
+	let answer: string = null; // save the answer for quick input
 	const validOperators: string[] = [];
 
 	onMount(() => {
@@ -15,7 +15,7 @@
 			const operatorElement = operatorElements[i];
 			validOperators.push(operatorElement.textContent);
 		}
-	})
+	});
 
 	const handleClick = (e: Event) => {
 		// @ts-ignore this does exist, silly
@@ -28,10 +28,12 @@
 				break;
 
 			case '=':
+				if (operations.length === 0) return;
 				calculate();
 				break;
 
 			case 'ans':
+				if (!answer) return;
 				operations = update(operations, { $push: [answer] });
 				break;
 
@@ -43,7 +45,7 @@
 				operations = update(operations, { $push: [value] });
 				break;
 		}
-	}
+	};
 
 	const fetchExpression = () => operations.join('').replace(/×/g, '*').replace(/÷/g, '/');
 
@@ -57,20 +59,23 @@
 		} catch (e) {
 			console.error(e);
 			displayElement.style.backgroundColor = '#ff6961';
-			setTimeout(() => {displayElement.style.backgroundColor = null}, 1000);
+			setTimeout(() => {
+				displayElement.style.backgroundColor = null;
+			}, 1000);
 		}
-	}
+	};
 
 	const onKeyDown = (e: KeyboardEvent) => {
-		const code = e.code;
+		const { code } = e;
 		const lastOperation = operations[operations.length - 1];
-		
+		console.log(code);
+
 		if (e.code.startsWith('Digit') && !e.shiftKey) {
 			const digit = code.split('Digit')[1];
 			operations = update(operations, { $push: [digit] });
 		} else if (!isNaN(parseInt(lastOperation))) {
 			if (e.shiftKey) {
-				switch (e.code) {
+				switch (code) {
 					case 'Digit8':
 						if (lastOperation === '×') return;
 						operations = update(operations, { $push: ['×'] });
@@ -81,9 +86,18 @@
 						operations = update(operations, { $push: ['+'] });
 						break;
 				}
+			} else if (e.ctrlKey) {
+				switch (code) {
+					case 'KeyV':
+						if (!answer) return;
+						operations = update(operations, { $push: [answer] });
+						break;
+				}
 			} else {
-				switch (e.code) {
+				switch (code) {
+					case 'Enter':
 					case 'Equal':
+						if (operations.length === 0) return;
 						calculate();
 						break;
 
@@ -96,16 +110,22 @@
 						if (lastOperation === '÷') return;
 						operations = update(operations, { $push: ['÷'] });
 						break;
+
+					case 'Backspace':
+						operations = update(operations, { $splice: [[-1, 1]] });
+						break;
 				}
 			}
 		}
-	}
+	};
 </script>
 
 <svelte:window on:keydown={onKeyDown} />
 
 <div class="grid grid-flow-row auto-rows-max grid-cols-4">
-	<div class="bg-black col-span-4 p-10 text-white text-3xl h-28" bind:this={displayElement}>{operations.join('') ?? ''}</div>
+	<div class="bg-black col-span-4 p-10 text-white text-3xl h-28 display" bind:this={displayElement}>
+		{operations.join('') ?? ''}
+	</div>
 
 	<div class="button" on:click={handleClick}>C</div>
 	<div class="button op" on:click={handleClick}>÷</div>

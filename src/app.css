@@ -10,6 +10,7 @@
 		@apply border-2;
 		@apply border-gray-100;
 		@apply text-center;
+		@apply select-none;
 	}
 
 	.button:hover {
@@ -19,6 +20,20 @@
 	.button.disabled:hover {
 		@apply cursor-default;
 	}
+
+	.display {
+		@apply select-all;
+	}
+}
+
+.display::selection {
+	background: #efefef;
+	color: #000000;
+}
+
+.display::-moz-selection {
+	background: #efefef;
+	color: #000000;
 }
 
 body {
