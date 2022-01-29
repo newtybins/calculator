@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as math from 'mathjs';
+	import * as math from 'mathjs'; // todo: own math parser
 	import update from 'immutability-helper';
 	import { onMount } from 'svelte';
 
@@ -19,10 +19,9 @@
 
 	const handleClick = (e: Event) => {
 		// @ts-ignore this does exist, silly
-		const value = e.target.innerText;
-		const lastOperation = operations[operations.length - 1];
+		const { innerText: operation } = e.target;
 
-		switch (value) {
+		switch (operation) {
 			case 'C':
 				operations = [];
 				break;
@@ -38,26 +37,31 @@
 				break;
 
 			default:
-				// Ensure that two of the same operator can not be touching
-				console.log(operations);
-				if (isNaN(parseInt(value)) && validOperators.includes(lastOperation)) return;
-				if (!lastOperation && isNaN(parseInt(value))) return;
-				operations = update(operations, { $push: [value] });
+				if (!shouldPlaceOperator(operation)) return;
+				operations = update(operations, { $push: [operation] });
 				break;
 		}
 	};
 
-	const fetchExpression = () => operations.join('').replace(/×/g, '*').replace(/÷/g, '/');
+	const shouldPlaceOperator = (operator: string) => {
+		const last = operations?.[operations.length - 1];
+
+		return !(operator !== '-' // If the operator is not a minus...
+			? isNaN(parseInt(operator)) && isNaN(parseInt(last)) && last !== '!' // ..ensure that operators never touch
+			: last === '-' && operations?.[operations.length - 2] === '-'); // ...otherwise, ensure that only two minuses can touch
+	};
+
+	const sanitiseExpression = () => operations.join('').replace(/×/g, '*').replace(/÷/g, '/');
 
 	const calculate = () => {
-		const expression = fetchExpression();
+		const expression = sanitiseExpression();
 
 		try {
 			const output = math.evaluate(expression);
 			answer = math.format(output, { precision: 14 });
 			operations = [answer];
 		} catch (e) {
-			console.error(e);
+			console.error(`There was an error with calculating your result. Reason: ${e.message}`);
 			displayElement.style.backgroundColor = '#ff6961';
 			setTimeout(() => {
 				displayElement.style.backgroundColor = null;
@@ -67,27 +71,49 @@
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		const { code } = e;
-		const lastOperation = operations[operations.length - 1];
-		console.log(code);
 
 		if (e.code.startsWith('Digit') && !e.shiftKey) {
 			const digit = code.split('Digit')[1];
 			operations = update(operations, { $push: [digit] });
-		} else if (!isNaN(parseInt(lastOperation))) {
+		} else {
 			if (e.shiftKey) {
+				let operation: string = null;
+				let keyPressed = true;
+
 				switch (code) {
+					// *
 					case 'Digit8':
-						if (lastOperation === '×') return;
-						operations = update(operations, { $push: ['×'] });
+						operation = '×';
 						break;
 
+					// +
 					case 'Equal':
-						if (lastOperation === '+') return;
-						operations = update(operations, { $push: ['+'] });
+						operation = '+';
+						break;
+
+					// !
+					case 'Digit1':
+						operation = '!';
+						break;
+
+					default:
+						keyPressed = false;
 						break;
 				}
+
+				// Factorial specific rules
+				if (operation === '!') {
+					const last = operations?.[operations.length - 1];
+
+					if (isNaN(parseInt(last))) return;
+				} else {
+					if (!shouldPlaceOperator(operation) || !keyPressed) return;
+				}
+
+				operations = update(operations, { $push: [operation] });
 			} else if (e.ctrlKey) {
 				switch (code) {
+					// CTRL + V
 					case 'KeyV':
 						if (!answer) return;
 						operations = update(operations, { $push: [answer] });
@@ -95,23 +121,28 @@
 				}
 			} else {
 				switch (code) {
+					// ENTER or =
 					case 'Enter':
 					case 'Equal':
 						if (operations.length === 0) return;
 						calculate();
 						break;
 
+					// -
 					case 'Minus':
-						if (lastOperation === '-') return;
+						if (!shouldPlaceOperator('-')) return;
 						operations = update(operations, { $push: ['-'] });
 						break;
 
+					// /
 					case 'Slash':
-						if (lastOperation === '÷') return;
+						if (!shouldPlaceOperator('÷')) return;
 						operations = update(operations, { $push: ['÷'] });
 						break;
 
+					// BACKSPACE
 					case 'Backspace':
+						console.log(operations);
 						operations = update(operations, { $splice: [[-1, 1]] });
 						break;
 				}
@@ -122,6 +153,7 @@
 
 <svelte:window on:keydown={onKeyDown} />
 
+<!-- Add a button for factorials -->
 <div class="grid grid-flow-row auto-rows-max grid-cols-4">
 	<div class="bg-black col-span-4 p-10 text-white text-3xl h-28 display" bind:this={displayElement}>
 		{operations.join('') ?? ''}
